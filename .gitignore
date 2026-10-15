@@ -2,8 +2,8 @@
 raw/*.parquet
 raw/games.csv
 raw/*.part
-data/
-output/
+/data/
+/output/
 __pycache__/
 .DS_Store
 # never commit secrets
