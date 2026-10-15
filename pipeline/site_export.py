@@ -4,6 +4,7 @@
   rankings.json  power rankings: current Elo, offense/defense EPA, QB, record, Elo history
   matchups.json  per upcoming/recent game: side-by-side team stats the model used
   history.json   every out-of-sample game 2006-last season, compact, for the strategy simulator
+  games_db.json  every final game since 1999 from each team's side, for the History explorer
 """
 import json
 import shutil
@@ -108,6 +109,67 @@ def main():
              r(x.away_spread_odds, 0), r(x.over_odds, 0), r(x.under_odds, 0), r(x.home_moneyline, 0), r(x.away_moneyline, 0)]
             for x in h.itertuples(index=False)]
     dump("history.json", {"cols": cols, "rows": rows})
+    games_db()
+
+
+def games_db():
+    """One row per team per final game (1999-today), team's point of view."""
+    g = pd.read_parquet(DATA / "games.parquet")
+    g = g[g.result.notna()].copy()
+    st = pd.read_parquet(DATA / "game_stats.parquet")[["game_id", "team", "plays", "epa", "giveaways", "sacks", "drives", "drive_pts"]]
+    rows = []
+    for side, opp in (("home", "away"), ("away", "home")):
+        d = pd.DataFrame({
+            "game_id": g.game_id, "season": g.season, "week": g.week, "type": np.where(g.game_type == "REG", "REG", "POST"),
+            "date": pd.to_datetime(g.gameday).dt.strftime("%Y-%m-%d"), "wd": g.weekday.str[:3], "kick": g.gametime,
+            "team": g[f"{side}_team"], "opp": g[f"{opp}_team"],
+            "loc": np.where(g.get("neutral", 0) == 1, "N", "H" if side == "home" else "A"),
+            "pf": g[f"{side}_score"], "pa": g[f"{opp}_score"], "ot": g.overtime.fillna(0).astype(int),
+            # team's spread: negative = favored (nfldata spread_line is the expected home margin)
+            "spread": -g.spread_line if side == "home" else g.spread_line, "tl": g.total_line,
+            "ml": g[f"{side}_moneyline"], "rest": g[f"{side}_rest"], "orest": g[f"{opp}_rest"],
+            "div": g.div_game.fillna(0).astype(int), "roof": g.roof, "surf": g.surface, "temp": g.temp, "wind": g.wind,
+            "qb": g[f"{side}_qb_name"], "oqb": g[f"{opp}_qb_name"], "coach": g[f"{side}_coach"], "ocoach": g[f"{opp}_coach"],
+        })
+        rows.append(d)
+    d = pd.concat(rows, ignore_index=True)
+    own = st.rename(columns={"epa": "epa_sum", "giveaways": "to"})
+    d = d.merge(own[["game_id", "team", "plays", "epa_sum", "to", "sacks"]], on=["game_id", "team"], how="left")
+    oth = st.rename(columns={"team": "opp", "plays": "oplays", "epa": "oepa_sum", "giveaways": "tk", "sacks": "sk_made"})
+    d = d.merge(oth[["game_id", "opp", "oplays", "oepa_sum", "tk", "sk_made"]], on=["game_id", "opp"], how="left")
+    d["epa"] = d.epa_sum / d.plays
+    d["oepa"] = d.oepa_sum / d.oplays
+    d["res"] = np.select([d.pf > d.pa, d.pf < d.pa], ["W", "L"], "T")
+    # previous game in the same season and the streak coming in
+    d = d.sort_values(["team", "date"])
+    d["prev"] = d.groupby(["team", "season"]).res.shift(1).fillna("")
+    d["prev_margin"] = d.groupby(["team", "season"]).pf.shift(1) - d.groupby(["team", "season"]).pa.shift(1)
+    streak = []
+    for _, grp in d.groupby(["team", "season"], sort=False):
+        s = 0
+        for r_ in grp.res:
+            streak.append(s)
+            s = (s + 1 if s >= 0 else 1) if r_ == "W" else (s - 1 if s <= 0 else -1) if r_ == "L" else 0
+    d["streak"] = streak
+    cols = ["season", "week", "type", "date", "wd", "kick", "team", "opp", "loc", "pf", "pa", "ot", "spread", "tl", "ml",
+            "rest", "orest", "div", "roof", "surf", "temp", "wind", "qb", "oqb", "coach", "ocoach", "epa", "oepa", "to", "tk",
+            "sacks", "sk_made", "prev", "prev_margin", "streak"]
+    d = d.sort_values(["date", "team"])
+    nd = {"epa": 3, "oepa": 3, "spread": 1, "tl": 1}
+    out = []
+    for row in d[cols].itertuples(index=False):
+        rec = []
+        for c, v in zip(cols, row):
+            if isinstance(v, (float, np.floating)):
+                rec.append(None if pd.isna(v) else (round(float(v), nd[c]) if c in nd else int(v) if float(v).is_integer() else round(float(v), 1)))
+            elif isinstance(v, (np.integer,)):
+                rec.append(int(v))
+            elif v is None or (isinstance(v, float) and pd.isna(v)):
+                rec.append(None)
+            else:
+                rec.append(v)
+        out.append(rec)
+    dump("games_db.json", {"cols": cols, "rows": out})
 
 
 if __name__ == "__main__":

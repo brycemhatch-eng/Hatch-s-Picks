@@ -476,13 +476,167 @@ function pageAbout() {
     ${foot()}`;
 }
 
+// ---------------------------------------------------------------- history explorer
+let DB = null, dbLoading = false;
+const HF = {  // field: [label, type, getter]   type: num | cat | text
+  pf: ['Points scored', 'num', r => r.pf], pa: ['Points allowed (opponent scored)', 'num', r => r.pa],
+  margin: ['Margin (team − opponent)', 'num', r => r.margin], total: ['Total points', 'num', r => r.total],
+  spread: ['Team spread (− = favored)', 'num', r => r.spread], tl: ['Vegas total line', 'num', r => r.tl],
+  ml: ['Team moneyline', 'num', r => r.ml], rest: ['Rest days', 'num', r => r.rest], orest: ['Opponent rest days', 'num', r => r.orest],
+  restdiff: ['Rest advantage (days)', 'num', r => r.rest == null || r.orest == null ? null : r.rest - r.orest],
+  temp: ['Temperature (°F)', 'num', r => r.temp], wind: ['Wind (mph)', 'num', r => r.wind],
+  epa: ['Offense EPA / play (in game)', 'num', r => r.epa], oepa: ['Defense EPA / play allowed (in game)', 'num', r => r.oepa],
+  to: ['Turnovers committed', 'num', r => r.to], tk: ['Takeaways', 'num', r => r.tk], todiff: ['Turnover margin', 'num', r => r.tk == null || r.to == null ? null : r.tk - r.to],
+  sacks: ['Sacks taken', 'num', r => r.sacks], sk_made: ['Sacks made', 'num', r => r.sk_made],
+  streak: ['Streak entering (+ wins / − losses)', 'num', r => r.streak], prev_margin: ['Previous game margin', 'num', r => r.prev_margin],
+  week: ['Week', 'num', r => r.week], season: ['Season', 'num', r => r.season],
+  res: ['Result', 'cat', r => r.res], prev: ['Previous game result', 'cat', r => r.prev || 'None (season opener)'],
+  fav: ['Favorite / underdog', 'cat', r => r.fav], ats: ['Against the spread', 'cat', r => r.ats ?? 'No line'], ou: ['Over / under', 'cat', r => r.ou ?? 'No line'],
+  loc: ['Home / away', 'cat', r => ({H: 'Home', A: 'Away', N: 'Neutral'})[r.loc]], kickw: ['Kickoff window', 'cat', r => r.kickw], wd: ['Day of week', 'cat', r => r.wd],
+  roof: ['Stadium roof', 'cat', r => r.roof || 'Unknown'], surf: ['Surface', 'cat', r => r.surf || 'Unknown'],
+  div: ['Division game', 'cat', r => r.div ? 'Yes' : 'No'], ot: ['Overtime', 'cat', r => r.ot ? 'Yes' : 'No'], type: ['Season type', 'cat', r => r.type === 'REG' ? 'Regular season' : 'Playoffs'],
+  qb: ['Team QB (name contains)', 'text', r => r.qb], oqb: ['Opponent QB (name contains)', 'text', r => r.oqb], coach: ['Head coach (name contains)', 'text', r => r.coach], ocoach: ['Opponent coach (name contains)', 'text', r => r.ocoach],
+};
+const PRESETS = [
+  ['Opponent scored 35+', [['pa', '>=', 35]]], ['Scored 35+', [['pf', '>=', 35]]], ['Held opponent to 10 or fewer', [['pa', '<=', 10]]],
+  ['Home underdogs', [['loc', 'is', 'Home'], ['fav', 'is', 'Underdog']]], ['Road favorites', [['loc', 'is', 'Away'], ['fav', 'is', 'Favorite']]],
+  ['Big favorites (−10 or more)', [['spread', '<=', -10]]], ['After a loss', [['prev', 'is', 'L']]], ['After a blowout loss (14+)', [['prev_margin', '<=', -14]]],
+  ['Off a bye (10+ days rest)', [['rest', '>=', 10]]], ['Short week (≤ 5 days)', [['rest', '<=', 5]]], ['Division games', [['div', 'is', 'Yes']]],
+  ['Primetime', [['kickw', 'is', 'Primetime']]], ['Cold (32°F or below)', [['temp', '<=', 32]]], ['Windy (15+ mph)', [['wind', '>=', 15]]],
+  ['Won turnover battle', [['todiff', '>=', 1]]], ['3+ game win streak', [['streak', '>=', 3]]], ['Playoffs', [['type', 'is', 'Playoffs']]], ['Overtime', [['ot', 'is', 'Yes']]],
+];
+const GROUPS = {team: ['Team', r => r.team], overall: ['All matching games', () => 'All'], season: ['Season', r => r.season], opp: ['Opponent', r => r.opp],
+  qb: ['Team QB', r => r.qb || '—'], coach: ['Head coach', r => r.coach || '—'], loc: ['Home / away', r => HF.loc[2](r)], fav: ['Favorite / underdog', r => r.fav], kickw: ['Kickoff window', r => r.kickw], decade: ['Era', r => Math.floor(r.season / 5) * 5 + '–' + (Math.floor(r.season / 5) * 5 + 4)]};
+let HQ = store.get('hq', {from: 1999, to: 2026, type: 'all', team: '', opp: '', loc: '', group: 'team', conds: [['pa', '>=', 35]], minG: 1, sort: ['g', -1], show: 50, pick: null});
+
+function loadDB(cb) {
+  if (DB) return cb();
+  if (dbLoading) return;
+  dbLoading = true;
+  fetch('data/games_db.json').then(r => r.json()).then(d => {
+    DB = d.rows.map(a => { const r = {}; d.cols.forEach((c, i) => r[c] = a[i]);
+      r.margin = r.pf - r.pa; r.total = r.pf + r.pa; r.res = r.margin > 0 ? 'W' : r.margin < 0 ? 'L' : 'T';
+      r.ats = r.spread == null ? null : (r.margin + r.spread > 0 ? 'W' : r.margin + r.spread < 0 ? 'L' : 'P');
+      r.ou = r.tl == null ? null : (r.total > r.tl ? 'Over' : r.total < r.tl ? 'Under' : 'Push');
+      r.fav = r.spread == null ? 'No line' : r.spread < 0 ? 'Favorite' : r.spread > 0 ? 'Underdog' : "Pick'em";
+      r.kickw = !r.kick ? 'Unknown' : r.kick >= '19:00' ? 'Primetime' : r.kick >= '15:30' ? 'Late afternoon' : 'Early';
+      return r; });
+    cb();
+  });
+}
+function catValues(f) { return [...new Set(DB.map(HF[f][2]))].filter(v => v != null).sort(); }
+function matchRow(r) {
+  if (r.season < HQ.from || r.season > HQ.to) return false;
+  if (HQ.type === 'REG' && r.type !== 'REG') return false;
+  if (HQ.type === 'POST' && r.type === 'REG') return false;
+  if (HQ.team && r.team !== HQ.team) return false;
+  if (HQ.opp && r.opp !== HQ.opp) return false;
+  if (HQ.loc && r.loc !== HQ.loc) return false;
+  for (const [f, op, v, v2] of HQ.conds) {
+    const def = HF[f]; if (!def || v === '' || v == null) continue;
+    const x = def[2](r);
+    if (def[1] === 'num') { if (x == null) return false; const a = +v;
+      if (op === '>=' && !(x >= a)) return false; if (op === '<=' && !(x <= a)) return false; if (op === '=' && x !== a) return false;
+      if (op === 'between' && !(x >= a && x <= +(v2 ?? a))) return false; }
+    else if (def[1] === 'cat') { if (op === 'is' && String(x) !== String(v)) return false; if (op === 'not' && String(x) === String(v)) return false; }
+    else { if (!String(x || '').toLowerCase().includes(String(v).toLowerCase())) return false; }
+  }
+  return true;
+}
+function agg(rows) {
+  const a = {g: rows.length, w: 0, l: 0, t: 0, aw: 0, al: 0, ap: 0, ov: 0, un: 0, pf: 0, pa: 0};
+  for (const r of rows) { a[r.res === 'W' ? 'w' : r.res === 'L' ? 'l' : 't']++; if (r.ats) a[r.ats === 'W' ? 'aw' : r.ats === 'L' ? 'al' : 'ap']++;
+    if (r.ou === 'Over') a.ov++; else if (r.ou === 'Under') a.un++; a.pf += r.pf; a.pa += r.pa; }
+  a.wp = a.g ? (a.w + a.t / 2) / a.g : 0; a.atsp = a.aw + a.al ? a.aw / (a.aw + a.al) : null; a.ovp = a.ov + a.un ? a.ov / (a.ov + a.un) : null;
+  a.apf = a.g ? a.pf / a.g : 0; a.apa = a.g ? a.pa / a.g : 0; a.am = a.apf - a.apa;
+  return a;
+}
+function pageHistory() {
+  $('#hero').innerHTML = '';
+  if (!DB) { $('#app').innerHTML = `<div class="head"><div><div class="eyebrow">Since 1999</div><h2>History explorer</h2></div></div><div class="card empty">Loading 27 seasons of games…</div>${foot()}`; loadDB(() => { if (location.hash.startsWith('#/history')) pageHistory(); }); return; }
+  const teams = Object.keys(TEAM).filter(t => t.length <= 3).sort();
+  const seasons = [...new Set(DB.map(r => r.season))].sort((a, b) => a - b);
+  const sel = (id, opts, val) => `<select id="${id}">${opts.map(([v, l]) => `<option value="${esc(v)}" ${String(v) === String(val) ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
+  const condRow = ([f, op, v, v2], i) => {
+    const def = HF[f] || HF.pa, t = def[1];
+    const ops = t === 'num' ? [['>=', 'at least'], ['<=', 'at most'], ['=', 'exactly'], ['between', 'between']] : t === 'cat' ? [['is', 'is'], ['not', 'is not']] : [['contains', 'contains']];
+    const val = t === 'cat' ? sel(`cv${i}`, catValues(f).map(x => [x, x]), v)
+      : `<input id="cv${i}" type="${t === 'num' ? 'number' : 'search'}" value="${esc(v ?? '')}" step="any" style="width:${t === 'num' ? 90 : 170}px">${op === 'between' ? ` and <input id="cw${i}" type="number" step="any" value="${esc(v2 ?? '')}" style="width:90px">` : ''}`;
+    return `<div class="hq-cond" data-i="${i}">${sel(`cf${i}`, Object.entries(HF).map(([k, d]) => [k, d[0]]), f)}${sel(`co${i}`, ops, op)}${val}<button class="hq-x" data-i="${i}" aria-label="Remove condition">×</button></div>`;
+  };
+  const rows = DB.filter(matchRow), all = agg(rows);
+  const gk = GROUPS[HQ.group] || GROUPS.team, groups = {};
+  rows.forEach(r => (groups[gk[1](r)] ??= []).push(r));
+  let table = Object.entries(groups).map(([k, rs]) => ({k, ...agg(rs)})).filter(x => x.g >= (HQ.minG || 1));
+  const [sk, sd] = HQ.sort; table.sort((a, b) => sd * ((a[sk] ?? -1) - (b[sk] ?? -1)) || String(a.k).localeCompare(String(b.k)));
+  const games = (HQ.pick != null ? rows.filter(r => String(gk[1](r)) === String(HQ.pick)) : rows).slice().sort((a, b) => b.date.localeCompare(a.date) || a.team.localeCompare(b.team));
+  const rec = a => `${a.w}–${a.l}${a.t ? '–' + a.t : ''}`;
+  const th = (k, l) => `<th class="n sort" data-k="${k}" ${sk === k ? `aria-sort="${sd > 0 ? 'ascending' : 'descending'}"` : ''}>${l}</th>`;
+  const gl = k => HQ.group === 'team' || HQ.group === 'opp' ? tlink(k, true) : esc(k);
+  $('#app').innerHTML = `
+    <div class="head"><div><div class="eyebrow">${DB.length.toLocaleString()} team-games · ${seasons[0]}–${seasons[seasons.length - 1]}</div><h2>History explorer</h2>
+      <p>Query every NFL game since ${seasons[0]} from each team's side. Pick a preset or build your own conditions, then group the results to see each team's record, against-the-spread record and over/under when that situation happened.</p></div></div>
+    <div class="card"><div class="body" style="display:grid;gap:14px">
+      <div class="hq-presets">${PRESETS.map(([l], i) => `<button class="chip" data-p="${i}">${l}</button>`).join('')}</div>
+      <div class="controls">
+        <label class="f">From${sel('hfrom', seasons.map(s => [s, s]), HQ.from)}</label>
+        <label class="f">To${sel('hto', seasons.map(s => [s, s]), HQ.to)}</label>
+        <label class="f">Games${sel('htype', [['all', 'Regular + playoffs'], ['REG', 'Regular season'], ['POST', 'Playoffs']], HQ.type)}</label>
+        <label class="f">Team${sel('hteam', [['', 'All teams'], ...teams.map(t => [t, team(t).name])], HQ.team)}</label>
+        <label class="f">Opponent${sel('hopp', [['', 'Any opponent'], ...teams.map(t => [t, team(t).name])], HQ.opp)}</label>
+        <label class="f">Where${sel('hloc', [['', 'Home or away'], ['H', 'Home'], ['A', 'Away'], ['N', 'Neutral site']], HQ.loc)}</label>
+      </div>
+      <div><div class="eyebrow" style="margin-bottom:6px">Conditions (all must be true)</div><div id="hconds" style="display:grid;gap:8px">${HQ.conds.map(condRow).join('') || '<span class="muted">No conditions: showing every game.</span>'}</div>
+        <div class="controls" style="margin-top:10px"><button class="chip add" id="hadd">+ Add condition</button><button class="chip" id="hclear">Clear all</button></div></div>
+      <div class="controls">
+        <label class="f">Group results by${sel('hgroup', Object.entries(GROUPS).map(([k, g]) => [k, g[0]]), HQ.group)}</label>
+        <label class="f">Minimum games${sel('hmin', [[1, '1'], [3, '3'], [5, '5'], [10, '10'], [20, '20']], HQ.minG)}</label>
+      </div>
+    </div>
+    <div class="sim-out">
+      <div><b class="num">${all.g.toLocaleString()}</b><small>matching team-games</small></div>
+      <div><b class="num">${rec(all)}</b><small>straight up · ${pct(all.wp, 1)}</small></div>
+      <div><b class="num">${all.aw}–${all.al}${all.ap ? '–' + all.ap : ''}</b><small>against the spread · ${all.atsp == null ? '—' : pct(all.atsp, 1)}</small></div>
+      <div><b class="num">${all.ov}–${all.un}</b><small>over–under · ${all.ovp == null ? '—' : pct(all.ovp, 1) + ' over'}</small></div>
+      <div><b class="num">${all.apf.toFixed(1)}–${all.apa.toFixed(1)}</b><small>avg score</small></div>
+    </div></div>
+    <div class="card"><h3>Results by ${gk[0].toLowerCase()}</h3><p class="sub">${table.length} group${table.length === 1 ? '' : 's'}. Click a row to list its games below; click a column to sort. ATS = against the spread (break-even 52.4%).</p>
+      <div class="tbl" style="max-height:560px"><table id="hgt"><thead><tr><th>${gk[0]}</th>${th('g', 'Games')}${th('wp', 'Record')}${th('atsp', 'ATS')}${th('ovp', 'Over / under')}${th('apf', 'Avg pts for')}${th('apa', 'Avg pts against')}${th('am', 'Avg margin')}</tr></thead>
+      <tbody>${table.map(x => `<tr data-k="${esc(x.k)}" class="${String(HQ.pick) === String(x.k) ? 'picked' : ''}" style="cursor:pointer"><td>${gl(x.k)}</td><td class="n num">${x.g}</td>
+        <td class="n num">${rec(x)} <small class="rkn">${pct(x.wp, 0)}</small></td><td class="n num ${x.atsp == null ? '' : x.atsp > .524 ? 'pos' : x.atsp < .476 ? 'neg' : ''}">${x.aw}–${x.al}${x.ap ? '–' + x.ap : ''} <small class="rkn">${x.atsp == null ? '' : pct(x.atsp, 0)}</small></td>
+        <td class="n num">${x.ov}–${x.un} <small class="rkn">${x.ovp == null ? '' : pct(x.ovp, 0)}</small></td><td class="n num">${x.apf.toFixed(1)}</td><td class="n num">${x.apa.toFixed(1)}</td><td class="n num ${x.am >= 0 ? 'pos' : 'neg'}">${sgn(x.am, 1)}</td></tr>`).join('') || '<tr><td colspan="8" class="empty">No games match. Loosen a condition.</td></tr>'}</tbody></table></div></div>
+    <div class="card"><h3>${HQ.pick != null ? `Games: ${esc(HQ.pick)}` : 'Matching games'} <span class="muted" style="font:400 13px var(--body)">${games.length.toLocaleString()}</span>${HQ.pick != null ? ' <button class="chip" id="hunpick">Show all</button>' : ''}</h3>
+      <div class="tbl"><table><thead><tr><th>Date</th><th>Team</th><th></th><th>Opponent</th><th class="n">Score</th><th>Result</th><th class="n">Spread</th><th>ATS</th><th class="n">Total</th><th>O/U</th><th>QB</th></tr></thead><tbody>
+      ${games.slice(0, HQ.show).map(r => `<tr><td class="num">${r.date}${r.type !== 'REG' ? ' <span class="pill lean">PO</span>' : ''}</td><td>${tlink(r.team)}</td><td class="muted">${r.loc === 'A' ? '@' : r.loc === 'N' ? 'vs (N)' : 'vs'}</td><td>${tlink(r.opp)}</td>
+        <td class="n num">${r.pf}–${r.pa}${r.ot ? ' OT' : ''}</td><td><span class="pill ${r.res.toLowerCase() === 't' ? 'p' : r.res.toLowerCase()}">${r.res}</span></td><td class="n num">${r.spread == null ? '—' : r.spread === 0 ? 'PK' : sgn(r.spread, 1)}</td>
+        <td>${r.ats ? `<span class="pill ${r.ats.toLowerCase()}">${r.ats}</span>` : ''}</td><td class="n num">${r.tl ?? '—'}</td><td class="muted">${r.ou ?? ''}</td><td class="muted">${esc(r.qb || '')}</td></tr>`).join('')}
+      </tbody></table></div>${games.length > HQ.show ? `<div class="body"><button class="chip" id="hmore">Show 100 more</button></div>` : ''}</div>
+    ${foot()}`;
+  const save = () => { store.set('hq', HQ); const y = scrollY; pageHistory(); scrollTo(0, y); };
+  const readConds = () => { HQ.conds = $$('.hq-cond').map(el => { const i = el.dataset.i; return [$(`#cf${i}`).value, $(`#co${i}`).value, $(`#cv${i}`).value, $(`#cw${i}`)?.value]; }); };
+  $$('.hq-presets .chip').forEach(b => b.onclick = () => { HQ.conds = PRESETS[+b.dataset.p][1].map(c => [...c]); HQ.pick = null; HQ.show = 50; save(); });
+  [['hfrom', 'from', Number], ['hto', 'to', Number], ['htype', 'type', String], ['hteam', 'team', String], ['hopp', 'opp', String], ['hloc', 'loc', String], ['hgroup', 'group', String], ['hmin', 'minG', Number]]
+    .forEach(([id, k, fn]) => $('#' + id).onchange = e => { HQ[k] = fn(e.target.value); if (k === 'group') HQ.pick = null; if (HQ.from > HQ.to) [HQ.from, HQ.to] = [HQ.to, HQ.from]; save(); });
+  $$('.hq-cond select').forEach(s => s.onchange = () => { const i = s.closest('.hq-cond').dataset.i; readConds();
+    if (s.id.startsWith('cf')) { const t = HF[HQ.conds[i][0]][1]; HQ.conds[i][1] = t === 'num' ? '>=' : t === 'cat' ? 'is' : 'contains'; HQ.conds[i][2] = t === 'cat' ? catValues(HQ.conds[i][0])[0] : ''; }
+    HQ.pick = null; save(); });
+  $$('.hq-cond input').forEach(inp => inp.oninput = () => { readConds(); clearTimeout(window._hq); window._hq = setTimeout(() => { HQ.pick = null; const id = inp.id; save(); const el = $('#' + id); if (el) { el.focus(); const n = el.value.length; try { el.setSelectionRange(n, n); } catch (e) {} } }, 450); });
+  $$('.hq-x').forEach(b => b.onclick = () => { readConds(); HQ.conds.splice(+b.dataset.i, 1); save(); });
+  $('#hadd').onclick = () => { readConds(); HQ.conds.push(['pf', '>=', '']); save(); };
+  $('#hclear').onclick = () => { HQ.conds = []; HQ.team = HQ.opp = HQ.loc = ''; HQ.type = 'all'; HQ.from = seasons[0]; HQ.to = seasons[seasons.length - 1]; HQ.pick = null; save(); };
+  $$('#hgt th.sort').forEach(t => t.onclick = () => { const k = t.dataset.k; HQ.sort = [k, HQ.sort[0] === k ? -HQ.sort[1] : -1]; save(); });
+  $$('#hgt tbody tr[data-k]').forEach(tr => tr.onclick = e => { if (e.target.closest('a')) return; HQ.pick = HQ.pick === tr.dataset.k ? null : tr.dataset.k; HQ.show = 50; save(); });
+  $('#hmore') && ($('#hmore').onclick = () => { HQ.show += 100; save(); });
+  $('#hunpick') && ($('#hunpick').onclick = () => { HQ.pick = null; save(); });
+}
+
 // ---------------------------------------------------------------- router
 function route() {
   killCharts();
   const [r, arg] = location.hash.replace(/^#\/?/, '').split('/');
   setNav(r === 'week' || r === 'game' ? '' : r === 'team' ? 'rankings' : r || '');
   ({'': () => pageWeek(), week: () => pageWeek(+arg), game: () => pageGame(arg), rankings: pageRankings, team: () => pageTeam(arg),
-    lines: pageLines, record: pageRecord, performance: pagePerformance, about: pageAbout}[r] || (() => pageWeek()))();
+    lines: pageLines, history: pageHistory, record: pageRecord, performance: pagePerformance, about: pageAbout}[r] || (() => pageWeek()))();
   if (!route.keep) scrollTo(0, 0);
 }
 addEventListener('hashchange', route);

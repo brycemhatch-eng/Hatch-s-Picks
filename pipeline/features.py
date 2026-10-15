@@ -314,6 +314,7 @@ def injuries(games: pd.DataFrame) -> pd.DataFrame:
 def build() -> None:
     print("1/6 play-by-play aggregation")
     tg, qb = team_game_stats()
+    tg.to_parquet(OUT / "game_stats.parquet", index=False)  # per-game box stats for the history explorer
     games = load_games()
     print("2/6 rolling team ratings")
     rates = rolling_ratings(games, tg)

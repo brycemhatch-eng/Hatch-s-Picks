@@ -11,6 +11,7 @@ The site rebuilds itself every morning with GitHub Actions. It pulls the latest 
 | **This Week** | Best bets, model vs Vegas win % and projected scores for every game, and full game cards |
 | **Game pages** | Stat comparison of the two teams, model vs Vegas, best price across sportsbooks, and Elo history |
 | **Rankings** | Sortable power rankings (Elo, offense/defense EPA, QB) plus an offense-vs-defense chart |
+| **History** | Query every game since 1999 (e.g. "opponent scored 35+", home underdogs, after a loss) and get each team's record, ATS and over/under |
 | **Line Shop** | The model's side of every game priced at DraftKings, FanDuel, BetMGM, Caesars and more, with book-to-book discrepancies |
 | **2026 Record** | Every flagged play this season, graded live |
 | **Performance** | 20-season backtest vs Vegas, calibration, and an interactive strategy simulator |

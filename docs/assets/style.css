@@ -257,6 +257,16 @@ td.best .cell b{color:var(--pos)}
 .disc span{font:12px var(--mono);color:var(--muted)}
 .disc span.hi{color:var(--pos);font-weight:600}
 
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 12px;font:500 12px var(--body)}
+.chip:hover{border-color:var(--accent)}
+.chip.add{border-style:dashed}
+.hq-presets{display:flex;flex-wrap:wrap;gap:8px}
+.hq-cond{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.hq-cond select{max-width:100%}
+.hq-x{border:0;background:var(--sunk);color:var(--muted);width:30px;height:30px;border-radius:50%;font-size:16px}
+.hq-x:hover{color:var(--neg)}
+tr.picked td{background:var(--accent-soft)!important}
+
 /* about */
 .prose{max-width:78ch}
 .prose p,.prose li{margin:8px 0}
