@@ -1,0 +1,10 @@
+# large or regenerated files
+raw/*.parquet
+raw/games.csv
+raw/*.part
+data/
+output/
+__pycache__/
+.DS_Store
+# never commit secrets
+*.env

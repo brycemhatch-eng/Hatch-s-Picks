@@ -1,0 +1,55 @@
+name: Daily model refresh
+
+# Every morning: pull sportsbook odds + latest nflverse data, retrain the walk-forward model,
+# write fresh JSON into docs/data, and commit it. GitHub Pages serves docs/ as the website.
+on:
+  schedule:
+    - cron: "15 12 * * *"   # 5:15 AM Arizona (12:15 UTC)
+    - cron: "15 21 * * 4,6,0"  # 2:15 PM Arizona on Thu/Sat/Sun for fresher game-day odds
+  workflow_dispatch: {}      # "Run workflow" button on the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      # nflverse history (~500 MB) is cached between runs; only the current season is re-downloaded
+      - uses: actions/cache@v4
+        with:
+          path: |
+            raw/pbp_*.parquet
+            raw/inj_*.parquet
+            raw/snap_*.parquet
+          key: nflverse-${{ github.run_id }}
+          restore-keys: nflverse-
+
+      - name: Run pipeline
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: python pipeline/run.py
+
+      - name: Commit fresh data
+        run: |
+          git config user.name "hatchs-picks-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p raw/odds_history
+          cp raw/book_odds.json "raw/odds_history/$(date -u +%Y-%m-%dT%H%M).json" || true
+          git add docs/data raw/book_odds.json raw/odds_history
+          git diff --cached --quiet && echo "No changes" || git commit -m "Daily refresh $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push

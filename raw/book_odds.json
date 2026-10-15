@@ -1,0 +1,426 @@
+{
+ "fetched_at": "2026-10-15 21:17 UTC",
+ "source": "The Odds API",
+ "rows": [
+  {
+   "game": "SEA@DEN",
+   "book": "DraftKings",
+   "home_spread": 2.5,
+   "home_sp_price": -108,
+   "away_sp_price": -112,
+   "total": 40.5,
+   "over_price": -110,
+   "under_price": -110
+  },
+  {
+   "game": "SEA@DEN",
+   "book": "FanDuel",
+   "home_spread": 2.5,
+   "home_sp_price": -110,
+   "away_sp_price": -110,
+   "total": 40.5,
+   "over_price": -115,
+   "under_price": -105
+  },
+  {
+   "game": "SEA@DEN",
+   "book": "BetMGM",
+   "home_spread": 2.5,
+   "home_sp_price": -102,
+   "away_sp_price": -108,
+   "total": 40.5,
+   "over_price": -108,
+   "under_price": -110
+  },
+  {
+   "game": "HOU@JAX",
+   "book": "DraftKings",
+   "home_spread": -2.5,
+   "home_sp_price": -115,
+   "away_sp_price": -105,
+   "total": 42.5,
+   "over_price": -112,
+   "under_price": -108
+  },
+  {
+   "game": "HOU@JAX",
+   "book": "FanDuel",
+   "home_spread": -2.5,
+   "home_sp_price": -110,
+   "away_sp_price": -110,
+   "total": 42.5,
+   "over_price": -108,
+   "under_price": -112
+  },
+  {
+   "game": "HOU@JAX",
+   "book": "BetMGM",
+   "home_spread": -2.5,
+   "home_sp_price": -112,
+   "away_sp_price": -105,
+   "total": 42.5,
+   "over_price": -108,
+   "under_price": -110
+  },
+  {
+   "game": "CHI@ATL",
+   "book": "DraftKings",
+   "home_spread": 1.5,
+   "home_sp_price": -118,
+   "away_sp_price": -102,
+   "total": 51.5,
+   "over_price": -112,
+   "under_price": -108
+  },
+  {
+   "game": "CHI@ATL",
+   "book": "FanDuel",
+   "home_spread": 1.5,
+   "home_sp_price": -110,
+   "away_sp_price": -110,
+   "total": 51.5,
+   "over_price": -110,
+   "under_price": -110
+  },
+  {
+   "game": "CHI@ATL",
+   "book": "BetMGM",
+   "home_spread": 1.0,
+   "home_sp_price": -115,
+   "away_sp_price": -105,
+   "total": 51.5,
+   "over_price": -110,
+   "under_price": -108
+  },
+  {
+   "game": "BAL@CLE",
+   "book": "DraftKings",
+   "home_spread": 3.5,
+   "home_sp_price": -105,
+   "away_sp_price": -115,
+   "total": 40.5,
+   "over_price": -118,
+   "under_price": -102
+  },
+  {
+   "game": "BAL@CLE",
+   "book": "FanDuel",
+   "home_spread": 3.5,
+   "home_sp_price": -105,
+   "away_sp_price": -115,
+   "total": 41.5,
+   "over_price": -105,
+   "under_price": -115
+  },
+  {
+   "game": "BAL@CLE",
+   "book": "BetMGM",
+   "home_spread": 4.0,
+   "home_sp_price": -110,
+   "away_sp_price": -108,
+   "total": 41.0,
+   "over_price": -108,
+   "under_price": -110
+  },
+  {
+   "game": "CAR@PHI",
+   "book": "DraftKings",
+   "home_spread": 3.5,
+   "home_sp_price": -110,
+   "away_sp_price": -110,
+   "total": 38.5,
+   "over_price": -115,
+   "under_price": -105
+  },
+  {
+   "game": "CAR@PHI",
+   "book": "FanDuel",
+   "home_spread": 3.5,
+   "home_sp_price": -112,
+   "away_sp_price": -108,
+   "total": 38.5,
+   "over_price": -115,
+   "under_price": -105
+  },
+  {
+   "game": "CAR@PHI",
+   "book": "BetMGM",
+   "home_spread": 3.5,
+   "home_sp_price": -110,
+   "away_sp_price": -108,
+   "total": 39.0,
+   "over_price": -110,
+   "under_price": -108
+  },
+  {
+   "game": "TEN@IND",
+   "book": "DraftKings",
+   "home_spread": -7.0,
+   "home_sp_price": -105,
+   "away_sp_price": -115,
+   "total": 44.5,
+   "over_price": -112,
+   "under_price": -108
+  },
+  {
+   "game": "TEN@IND",
+   "book": "FanDuel",
+   "home_spread": -6.5,
+   "home_sp_price": -120,
+   "away_sp_price": -102,
+   "total": 44.5,
+   "over_price": -105,
+   "under_price": -115
+  },
+  {
+   "game": "TEN@IND",
+   "book": "BetMGM",
+   "home_spread": -7.0,
+   "home_sp_price": -102,
+   "away_sp_price": -115,
+   "total": 44.5,
+   "over_price": -110,
+   "under_price": -108
+  },
+  {
+   "game": "NYJ@NE",
+   "book": "DraftKings",
+   "home_spread": -7.5,
+   "home_sp_price": -105,
+   "away_sp_price": -115,
+   "total": 43.5,
+   "over_price": -112,
+   "under_price": -108
+  },
+  {
+   "game": "NYJ@NE",
+   "book": "FanDuel",
+   "home_spread": -7.5,
+   "home_sp_price": -102,
+   "away_sp_price": -120,
+   "total": 43.5,
+   "over_price": -108,
+   "under_price": -112
+  },
+  {
+   "game": "NYJ@NE",
+   "book": "BetMGM",
+   "home_spread": -7.0,
+   "home_sp_price": -112,
+   "away_sp_price": -105,
+   "total": 43.5,
+   "over_price": -110,
+   "under_price": -110
+  },
+  {
+   "game": "NO@NYG",
+   "book": "DraftKings",
+   "home_spread": 1.5,
+   "home_sp_price": -120,
+   "away_sp_price": 100,
+   "total": 45.5,
+   "over_price": -112,
+   "under_price": -108
+  },
+  {
+   "game": "NO@NYG",
+   "book": "FanDuel",
+   "home_spread": 1.5,
+   "home_sp_price": -122,
+   "away_sp_price": 100,
+   "total": 45.5,
+   "over_price": -110,
+   "under_price": -110
+  },
+  {
+   "game": "NO@NYG",
+   "book": "BetMGM",
+   "home_spread": 1.0,
+   "home_sp_price": -112,
+   "away_sp_price": -105,
+   "total": 46.0,
+   "over_price": -108,
+   "under_price": -110
+  },
+  {
+   "game": "PIT@TB",
+   "book": "DraftKings",
+   "home_spread": 2.5,
+   "home_sp_price": -105,
+   "away_sp_price": -115,
+   "total": 39.5,
+   "over_price": -108,
+   "under_price": -112
+  },
+  {
+   "game": "PIT@TB",
+   "book": "FanDuel",
+   "home_spread": 2.5,
+   "home_sp_price": -105,
+   "away_sp_price": -115,
+   "total": 39.5,
+   "over_price": -105,
+   "under_price": -115
+  },
+  {
+   "game": "PIT@TB",
+   "book": "BetMGM",
+   "home_spread": 2.5,
+   "home_sp_price": -105,
+   "away_sp_price": -115,
+   "total": 39.5,
+   "over_price": -108,
+   "under_price": -110
+  },
+  {
+   "game": "ARI@LA",
+   "book": "DraftKings",
+   "home_spread": -12.5,
+   "home_sp_price": -112,
+   "away_sp_price": -108,
+   "total": 51.5,
+   "over_price": -112,
+   "under_price": -108
+  },
+  {
+   "game": "ARI@LA",
+   "book": "FanDuel",
+   "home_spread": -12.5,
+   "home_sp_price": -108,
+   "away_sp_price": -112,
+   "total": 51.5,
+   "over_price": -115,
+   "under_price": -105
+  },
+  {
+   "game": "ARI@LA",
+   "book": "BetMGM",
+   "home_spread": -12.5,
+   "home_sp_price": -108,
+   "away_sp_price": -110,
+   "total": 52.0,
+   "over_price": -108,
+   "under_price": -110
+  },
+  {
+   "game": "BUF@LV",
+   "book": "DraftKings",
+   "home_spread": 4.5,
+   "home_sp_price": -108,
+   "away_sp_price": -112,
+   "total": 53.5,
+   "over_price": -110,
+   "under_price": -110
+  },
+  {
+   "game": "BUF@LV",
+   "book": "FanDuel",
+   "home_spread": 5.5,
+   "home_sp_price": -115,
+   "away_sp_price": -105,
+   "total": 53.5,
+   "over_price": -110,
+   "under_price": -110
+  },
+  {
+   "game": "BUF@LV",
+   "book": "BetMGM",
+   "home_spread": 4.5,
+   "home_sp_price": -110,
+   "away_sp_price": -110,
+   "total": 53.5,
+   "over_price": -108,
+   "under_price": -110
+  },
+  {
+   "game": "LAC@KC",
+   "book": "DraftKings",
+   "home_spread": -8.5,
+   "home_sp_price": -105,
+   "away_sp_price": -115,
+   "total": 41.5,
+   "over_price": -115,
+   "under_price": -105
+  },
+  {
+   "game": "LAC@KC",
+   "book": "FanDuel",
+   "home_spread": -8.5,
+   "home_sp_price": -102,
+   "away_sp_price": -120,
+   "total": 41.5,
+   "over_price": -110,
+   "under_price": -110
+  },
+  {
+   "game": "LAC@KC",
+   "book": "BetMGM",
+   "home_spread": -8.0,
+   "home_sp_price": -110,
+   "away_sp_price": -120,
+   "total": 41.5,
+   "over_price": -108,
+   "under_price": -110
+  },
+  {
+   "game": "DAL@GB",
+   "book": "DraftKings",
+   "home_spread": -1.5,
+   "home_sp_price": -105,
+   "away_sp_price": -115,
+   "total": 53.5,
+   "over_price": -105,
+   "under_price": -115
+  },
+  {
+   "game": "DAL@GB",
+   "book": "FanDuel",
+   "home_spread": -1.5,
+   "home_sp_price": -106,
+   "away_sp_price": -114,
+   "total": 52.5,
+   "over_price": -112,
+   "under_price": -108
+  },
+  {
+   "game": "DAL@GB",
+   "book": "BetMGM",
+   "home_spread": -1.0,
+   "home_sp_price": -110,
+   "away_sp_price": -108,
+   "total": 53.0,
+   "over_price": -110,
+   "under_price": -108
+  },
+  {
+   "game": "WAS@SF",
+   "book": "DraftKings",
+   "home_spread": -7.5,
+   "home_sp_price": -108,
+   "away_sp_price": -112,
+   "total": 51.5,
+   "over_price": -108,
+   "under_price": -112
+  },
+  {
+   "game": "WAS@SF",
+   "book": "FanDuel",
+   "home_spread": -7.5,
+   "home_sp_price": -108,
+   "away_sp_price": -112,
+   "total": 51.5,
+   "over_price": -105,
+   "under_price": -115
+  },
+  {
+   "game": "WAS@SF",
+   "book": "BetMGM",
+   "home_spread": -7.5,
+   "home_sp_price": -108,
+   "away_sp_price": -110,
+   "total": 51.5,
+   "over_price": -110,
+   "under_price": -108
+  }
+ ]
+}
